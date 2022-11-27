@@ -1,0 +1,53 @@
+---
+title: "Exam_work"
+author: "Liv Tollånes"
+date: "2022-11-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages('pacman')
+pacman::p_load("tidyverse", "ggplot2", "R2jags", "parallel", "hesim", "extraDistr")
+pacman::p_load("plyr", "dplyr")
+```
+
+```{r}
+df_testo <- read.csv("preprocessed_CCTdata.csv")
+
+unique(df_testo$pred_hotcold)
+
+#Filtering out the cold data
+hotdf <- filter(df_testo, pred_hotcold == "hot") # Half the size, because all subjects completed the same amount of trials in the hot and the cold condition
+
+#Testing that all subjects have the same amount of trials
+count(hotdf, "pp_code") # All subjects have the same amount of trials
+length(unique(hotdf$pp_code)) #There are 80 unique subjects
+
+#Renaming columns
+hotdf <- dplyr::rename(hotdf, ID = pp_code)
+hotdf$X <- NULL
+hotdf <- dplyr::rename(hotdf, n_losscards = pred_prob)
+unique(hotdf$n_losscards)
+
+hotdf <- dplyr::rename(hotdf, gain_amount = pred_gain)
+hotdf <- dplyr::rename(hotdf, loss_amount = pred_loss)
+hotdf <- dplyr::rename(hotdf, CCT_version = pred_hotcold)
+unique(hotdf$CCT_version)
+
+# Changing the column values in the n_losscards column
+hotdf["n_losscards"][hotdf["n_losscards"] == "ThreeLossCards"] <- 3
+hotdf["n_losscards"][hotdf["n_losscards"] == "OneLossCard"] <- 1
+
+# Number of individuals who got treatment A(placebo) and B(testosterone)
+table(hotdf$treatment)
+
+960/24 # Equally many people received placebo and testosterone
+
+write.csv(hotdf,"testosterone_fixed.csv", row.names = TRUE)
+
+```
+
